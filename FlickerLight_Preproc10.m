@@ -150,7 +150,7 @@ cfg.section = {'all'};
 cfg.elec = env.EEG.elec;
 cfg.layout = env.EEG.lay;
 cfg.blocksize = 30; 
-dat_after_ICA = fixChannels(cfg, dat_after_ICA);
+dat_after_ICA = fixChannels12(cfg, dat_after_ICA);
 %% check again the channel noise after interpolation
 cfg        = [];
 cfg.metric = 'zvalue';  % use by default zvalue method
