@@ -30,6 +30,10 @@ env.paths.curData = [env.data.rawFiles(n).folder '\'];
 % load data
 dat1 = load_xdf([env.paths.curData  env.data.rawFiles(n).name]);
 
+% find the EEG stream and convert to fieldtrip format
+EEG    = dat1{cellfun(@(x) strcmp(x.info.name, 'actiCHamp-21020490'), dat1)};
+ftEEG  = LSL2ft(EEG);
+% or use xdf2fieldtrip('file path');
 %% divide into the different LSL streams
 % This part depends on the triggers you have in your experiment.
 

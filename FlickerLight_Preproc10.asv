@@ -12,7 +12,7 @@ addpath(genpath(gitPath)); % add all subfolders in this project
 % enviroment (env) for this experiment
 cfg = [];
 cfg.data_folder    = ''; % insert the path where your data is
-cfg.fieldtrip_path = 'Z:\Experiments\Yoel\tools\fieldtrip-20250106'; % insert the path of your fieldtrip.
+cfg.fieldtrip_path = ''; % insert the path of your fieldtrip.
 
 cfg.project_folder = gitPath; % keep constant
 env = setupEnviroment11(cfg); 
@@ -30,6 +30,10 @@ env.paths.curData = [env.data.rawFiles(n).folder '\'];
 % load data
 dat1 = load_xdf([env.paths.curData  env.data.rawFiles(n).name]);
 
+% find the EEG stream and convert to fieldtrip format
+EEG    = dat1{cellfun(@(x) strcmp(x.info.name, 'actiCHamp-21020490'), dat1)};
+ftEEG  = LSL2ft(EEG);
+% or use xdf2fieldtrip('file path'); where file
 %% divide into the different LSL streams
 % This part depends on the triggers you have in your experiment.
 
@@ -103,8 +107,8 @@ cfg.continuous = 'yes';
 cfg.blocksize = 30;
 ft_databrowser(cfg,mEEG)
 
-%% remove noisy channels to be interpolated later.
-badCh = {'AF4', 'Cz'}; % Insert the noisy channel name here.
+%% remove noisy channels and keep them to be interpolated later.
+badCh = {'AF4'}; % Insert the noisy channel name here.
 
 if exist('badCh','var') && ~isempty(badCh{1})
     cfg = [];
@@ -122,7 +126,7 @@ cfg = [];
 cfg.method  = 'runica';
 cfg.channel = {'all'}; % EEG no EoG, no badch
 cfg.numcomponent = 20;
-%cfg.runica.maxsteps = 100;     % only uncomment if the ICA is too long and doesn't converge
+%cfg.runica.maxsteps = 100;     % only uncomment if the ICA is too long
 comp = ft_componentanalysis(cfg, mEEG);
 %% view ICA components
 % view time seriers and topopraphy of ICs
@@ -136,7 +140,7 @@ ft_databrowser(cfg,comp);
 
 %% reject components
 cfg = [];
-cfg.component = [1 2]; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+cfg.component = [1 2]; % insert the component numbers to be removed
 dat_after_ICA = ft_rejectcomponent(cfg, comp);
 
 %% reintroduce the bad channels and interpolate them
@@ -150,14 +154,14 @@ cfg.section = {'all'};
 cfg.elec = env.EEG.elec;
 cfg.layout = env.EEG.lay;
 cfg.blocksize = 30; 
-dat_after_ICA = fixChannels(cfg, dat_after_ICA);
-%%
+dat_after_ICA = fixChannels12(cfg, dat_after_ICA);
+%% check again the channel noise after interpolation
 cfg        = [];
 cfg.metric = 'zvalue';  % use by default zvalue method
 cfg.method = 'summary'; % use by default summary method
 dat_after_ICA = ft_rejectvisual(cfg,dat_after_ICA);
 
-%% view the data again
+%% view the data again - one last look at the data.
 cfg = [];
 cfg.ylim  = [-30 30];
 cfg.continuous = 'yes';
@@ -167,5 +171,4 @@ man_artifact = ft_databrowser(cfg,dat_after_ICA)
 
 %% save data after preproc
 save([env.paths.cleanData ID 'EEG' '_clean.mat'], "dat_after_ICA");
-save([env.paths.cleanData ID '_trlTable.mat'], "trlTable");
 disp(['Saved All Data!']);
