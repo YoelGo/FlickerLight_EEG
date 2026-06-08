@@ -19,7 +19,7 @@ env = [];
 try
     env.paths.fieldtrip_path = ftPath;
     addpath(ftPath);
-    addpath([fieldtrip_path 'external\xdf\']); % add specific LSL (.xdf) file functions
+    addpath([ftPath 'external\xdf\']); % add specific LSL (.xdf) file functions
     ft_defaults;
 catch
     error('Something is wrong with the fieldtirp path you entered.')

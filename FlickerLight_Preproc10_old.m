@@ -5,14 +5,15 @@
 %% loading in LSL file and preprocessing the data
 clc; clear all; close all;
 % set relevant paths %
+
 gitPath = 'C:\Users\yoelgo\Documents\GitHub\FlickerLight_EEG'; % set path of the local GitHub
 addpath(genpath(gitPath)); % add all subfolders in this project
 
 % a custom function which sets all the paths and prepares the variable 
 % enviroment (env) for this experiment
 cfg = [];
-cfg.data_folder    = ''; % insert the path where your data is
-cfg.fieldtrip_path = ''; % insert the path of your fieldtrip.
+cfg.data_folder    = 'Z:\Experiments\Yoel\Beat It 2\Tactile_Pilot\EEG_data\'; % insert the path where your data is
+cfg.fieldtrip_path = 'Z:\Experiments\Yoel\tools\fieldtrip-20250106\'; % insert the path of your fieldtrip.
 
 cfg.project_folder = gitPath; % keep constant
 env = setupEnviroment11(cfg); 
@@ -28,12 +29,10 @@ env.ID = ID;
 env.paths.curData = [env.data.rawFiles(n).folder '\'];
 
 % load data
-dat1 = load_xdf([env.paths.curData  env.data.rawFiles(n).name]);
-
-% find the EEG stream and convert to fieldtrip format
-EEG    = dat1{cellfun(@(x) strcmp(x.info.name, 'actiCHamp-21020490'), dat1)};
-ftEEG  = LSL2ft(EEG);
-% or use xdf2fieldtrip('file path'); where file
+filePath = [env.paths.curData  env.data.rawFiles(n).name];
+LSLdat = load_xdf(filePath);
+% extract the EEG channel and convert to fieldtirp.
+ftEEG  = LSL2ft(LSLdat{cellfun(@(x) strcmp(x.info.name, 'actiCHamp-21020490'), LSLdat)})
 %% divide into the different LSL streams
 % This part depends on the triggers you have in your experiment.
 
@@ -44,16 +43,21 @@ cfg.channel = {'AUX_1', 'AUX_2'};
 cfg.demean = 'yes';
 EOG = ft_preprocessing(cfg,ftEEG);
 
+cfg = [];
+cfg.channel = {'AUX_3', 'AUX_4'};
+cfg.demean = 'yes';
+photoD = ft_preprocessing(cfg,ftEEG);
+
 clc;
 cfg            = [];
-cfg.channel    = {'EEG', '-AUX_1', '-AUX_2', '-AUX_3', '-AUX_4'} ; % remove EOG and ECG for refferencing
+cfg.channel    = {'all', '-AUX_1', '-AUX_2', '-AUX_3', '-AUX_4'}; % remove EOG and ECG for refferencing
 cfg.detrend    = 'yes';
 cfg.demean     = 'yes';
 cfg.reref      = 'yes';
 cfg.refchannel = {'all'}; % A1 and A2 are the ear-clips
 % Notch filters to remove 50Hz and harmonics
-cfg.lpfreq      = 70;
-cfg.lpfilter    = 'yes';
+%cfg.lpfreq      = 70;
+%cfg.lpfilter    = 'yes';
 cfg.hpfilter    = 'yes';
 cfg.hpfreq      = 0.5;
 cfg.bsfilter    = 'yes';
